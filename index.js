@@ -3,25 +3,30 @@ const app = express();
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
+const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-router.get('/', function (req, res) {
-    let url = "https://www.youtube.com/watch?v=WUl1ccKaK_Y";
+router.get('/download', function (req, res) {
+    let url = req.query.URL;
 
-    const videoPath = 'video.mp4';
-    const audioPath = 'audio.mp3';
+    if(!ytdl.validateURL(url)) {
+        return res.sendStatus(400);
+    }
+
+    const videoPath = path.join(__dirname, 'video.mp4');
+    const audioPath = path.join(__dirname, 'audio.mp3');
     
     const videoWritableStream = fs.createWriteStream(videoPath);
-    const videoReadableStream = ytdl(url);
+    const videoReadableStream = ytdl(url, { quality: 'highestvideo' });
 
     videoReadableStream.pipe(videoWritableStream);
 
     videoWritableStream.on('finish', () => {
         console.log("Video downloaded successfully");
-        
+
         ffmpeg(videoPath)
             .noVideo()
             .audioCodec('libmp3lame')
@@ -29,7 +34,7 @@ router.get('/', function (req, res) {
             .on('end', () => {
                 console.log('Audio extracted successfully');
 
-                res.download(audioPath, (err) => {
+                res.download(audioPath, 'output.mp3', (err) => {
                     if (err) {
                         console.log('Error while downloading audio file:', err);
                     } else {
