@@ -8,18 +8,17 @@ app.listen(8080, () => {
 });
 app.get('/download', (req,res) => {
 var URL = req.query.URL;
-res.header('Content-Disposition', 'attachment; filename="audio.mp3"');
+res.header('Content-Disposition', 'attachment; filename="video.mp4"');
 ytdl(URL, {
-    format: 'mp3',
-			filter: 'audioonly'
+    format: 'mp4'
     }).pipe(res);
 });
 app.get('/downloadmp3', async (req, res, next) => {
 	try {
 		var url = req.query.url;
-		if(!ytdl.validateURL(url)) {
-			return res.sendStatus(400);
-		}
+		// if(!ytdl.validateURL(url)) {
+		// 	return res.sendStatus(400);
+		// }
 		let title = 'audio';
 
 		await ytdl.getBasicInfo(url, {
