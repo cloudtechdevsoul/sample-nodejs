@@ -1,20 +1,15 @@
-const express = require('express')
-const app = express()
-const port = process.env.PORT || 3000
-
-var LoremIpsum = require('lorem-ipsum').LoremIpsum;
-
-var lorem = new LoremIpsum({
-  sentencesPerParagraph: {
-    max: 1,
-    min: 1
-  },
-  wordsPerSentence: {
-    max: 1,
-    min: 1
-  }
+const express = require('express');
+const cors = require('cors');
+const ytdl = require('ytdl-core');
+const app = express();
+app.use(cors());
+app.listen(8080, () => {
+    console.log('Server Works !!! At port 8080');
 });
-
-app.get('/', (req, res) => res.send(lorem.generateParagraphs(7)))
-
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.get('/download', (req,res) => {
+var URL = req.query.URL;
+res.header('Content-Disposition', 'attachment; filename="video.mp4"');
+ytdl(URL, {
+    format: 'mp4'
+    }).pipe(res);
+});
