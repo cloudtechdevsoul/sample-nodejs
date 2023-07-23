@@ -2,20 +2,55 @@ const express = require('express');
 const app = express();
 const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+const fs = require('fs');
 const router = express.Router();
 
-router.get('/', function(req, res) {
-    let url = "https://www.youtube.com/watch?v=S9atRW1DgbQ";
-    res.header('Content-Disposition', 'attachment; filename="audio.mp3"');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+router.get('/', function (req, res) {
+    let url = "https://www.youtube.com/watch?v=WUl1ccKaK_Y";
+
+    const videoPath = 'video.mp4';
+    const audioPath = 'audio.mp3';
     
-    ytdl(url, {
-        // Request an audio-only format
-        filter: format => format.container === 'webm' && format.audioEncoding === 'opus'
-    })
-    .pipe(ffmpeg().audioCodec('libmp3lame').format('mp3').on('end', () => {
-        console.log('Finished processing');
-    }))
-    .pipe(res);
+    const videoWritableStream = fs.createWriteStream(videoPath);
+    const videoReadableStream = ytdl(url);
+
+    videoReadableStream.pipe(videoWritableStream);
+
+    videoWritableStream.on('finish', () => {
+        console.log("Video downloaded successfully");
+        
+        ffmpeg(videoPath)
+            .noVideo()
+            .audioCodec('libmp3lame')
+            .save(audioPath)
+            .on('end', () => {
+                console.log('Audio extracted successfully');
+
+                res.download(audioPath, (err) => {
+                    if (err) {
+                        console.log('Error while downloading audio file:', err);
+                    } else {
+                        console.log('Audio downloaded successfully');
+                    }
+
+                    // Delete the video and audio files
+                    fs.unlink(videoPath, (err) => {
+                        if (err) console.log(`Error deleting video file: ${err}`);
+                    });
+                    fs.unlink(audioPath, (err) => {
+                        if (err) console.log(`Error deleting audio file: ${err}`);
+                    });
+                });
+            });
+    });
+
+    videoWritableStream.on('error', (error) => {
+        console.error("Error downloading the video: ", error);
+        res.status(500).send("Error downloading the video");
+    });
 });
 
 app.use('/', router);
