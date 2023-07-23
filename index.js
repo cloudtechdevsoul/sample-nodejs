@@ -1,40 +1,21 @@
-const express = require('express');
-const cors = require('cors');
+const fs = require('fs');
+const ffmpeg = require('fluent-ffmpeg');
 const ytdl = require('ytdl-core');
-const app = express();
-app.use(cors());
-app.listen(8080, () => {
-    console.log('Server Works !!! At port 8080');
-});
+
 app.get('/download', (req,res) => {
-var URL = req.query.URL;
-res.header('Content-Disposition', 'attachment; filename="video.mp4"');
-ytdl(URL, {
-    format: 'mp4'
-    }).pipe(res);
-});
-app.get('/downloadmp3', async (req, res, next) => {
-	try {
-		var url = req.query.url;
-		// if(!ytdl.validateURL(url)) {
-		// 	return res.sendStatus(400);
-		// }
-		let title = 'audio';
+  var URL = req.query.URL;
+  res.header('Content-Disposition', 'attachment; filename="video.mp4"');
 
-		await ytdl.getBasicInfo(url, {
-			format: 'mp4'
-		}, (err, info) => {
-			if (err) throw err;
-			title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "");
-		});
+  let video = ytdl(URL, { quality: 'highestvideo' });
+  let audio = ytdl(URL, { quality: 'highestaudio' });
 
-		res.header('Content-Disposition', `attachment; filename="${title}.mp3"`);
-		ytdl(url, {
-			format: 'mp3',
-			filter: 'audioonly',
-		}).pipe(res);
-
-	} catch (err) {
-		console.error(err);
-	}
+  ffmpeg()
+    .input(video)
+    .videoCodec('copy')
+    .input(audio)
+    .audioCodec('copy')
+    .save('output.mp4')
+    .on('end', () => {
+      res.download('output.mp4');
+    });
 });
