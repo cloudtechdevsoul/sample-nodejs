@@ -5,8 +5,15 @@ const router = express.Router();
 
 router.get('/', function(req, res) {
     let url = "https://www.youtube.com/watch?v=S9atRW1DgbQ";
-    res.header('Content-Disposition', 'attachment; filename="video.mp4"');
-    ytdl(url, { format: 'mp4' }).pipe(res);
+    res.header('Content-Disposition', 'attachment; filename="audio.mp3"');
+    
+    ytdl(url, {
+        // Request an audio-only format
+        filter: 'audioonly',
+        // The quality option should be highestaudio for the best available audio quality
+        quality: 'highestaudio',
+    })
+    .pipe(res);
 });
 
 app.use('/', router);
