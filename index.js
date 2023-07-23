@@ -8,82 +8,56 @@ const router = express.Router();
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-
-// app.get('/download', (req,res) => {
-// var URL = req.query.URL;
-// res.header('Content-Disposition', 'attachment; filename="video.mp4"');
-// ytdl(URL, {
-//     format: 'mp4'
-//     }).pipe(res);
-// });
 router.get('/', function (req, res) {
-  var url = req.query.url;
-  console.log(url);
-    // let url = "https://www.youtube.com/watch?v=WUl1ccKaK_Y";
+    var url = req.query.url;
 
-    const videoPath = 'video.mp4';
-    const audioPath = 'audio.mp3';
-    
-    const videoWritableStream = fs.createWriteStream(videoPath);
-    const videoReadableStream = ytdl(url);
+    if (!ytdl.validateURL(url)) {
+        return res.sendStatus(400);
+    }
 
-    videoReadableStream.pipe(videoWritableStream);
+    const audioPath = 'audio.mp4';
+    const outputPath = 'output.mp3';
 
-    videoWritableStream.on('finish', () => {
-        console.log("Video downloaded successfully");
-        
-        ffmpeg(videoPath)
-            .noVideo()
-            .audioCodec('libmp3lame')
-            .save(audioPath)
-            .on('end', () => {
-                console.log('Audio extracted successfully');
+    // Download audio
+    ytdl(url, { quality: 'highestaudio' })
+        .pipe(fs.createWriteStream(audioPath))
+        .on('finish', () => {
+            console.log('Audio downloaded successfully');
 
-                res.download(audioPath, (err) => {
-                    if (err) {
-                        console.log('Error while downloading audio file:', err);
-                    } else {
-                        console.log('Audio downloaded successfully');
-                    }
+            // Convert audio to mp3
+            ffmpeg(audioPath)
+                .audioCodec('libmp3lame') // codec for mp3
+                .save(outputPath)
+                .on('end', () => {
+                    console.log('Output file created successfully');
+                    res.download(outputPath, (err) => {
+                        if (err) {
+                            console.log('Error while downloading output file:', err);
+                        } else {
+                            console.log('Output file downloaded successfully');
+                        }
 
-                    // Delete the video and audio files
-                    fs.unlink(videoPath, (err) => {
-                        if (err) console.log(`Error deleting video file: ${err}`);
+                        // Delete the audio and output files
+                        fs.unlink(audioPath, (err) => {
+                            if (err) console.log(`Error deleting audio file: ${err}`);
+                        });
+                        fs.unlink(outputPath, (err) => {
+                            if (err) console.log(`Error deleting output file: ${err}`);
+                        });
                     });
-                    fs.unlink(audioPath, (err) => {
-                        if (err) console.log(`Error deleting audio file: ${err}`);
-                    });
+                })
+                .on('error', (error) => {
+                    console.error("Error creating the output file: ", error);
+                    res.status(500).send("Error creating the output file");
                 });
-            });
-    });
-
-    videoWritableStream.on('error', (error) => {
-        console.error("Error downloading the video: ", error);
-        res.status(500).send("Error downloading the video");
-    });
+        })
+        .on('error', (error) => {
+            console.error("Error downloading the audio: ", error);
+            res.status(500).send("Error downloading the audio");
+        });
 });
 
 app.use('/', router);
 app.listen(8080, () => {
-    console.log('app listening on port 8080')
+    console.log('app listening on port 8080');
 });
-
-
-
-
-
-// const express = require('express');
-// const cors = require('cors');
-// const ytdl = require('ytdl-core');
-// const app = express();
-// app.use(cors());
-// app.listen(8080, () => {
-//     console.log('Server Works !!! At port 8080');
-// });
-// app.get('/download', (req,res) => {
-// var URL = req.query.URL;
-// res.header('Content-Disposition', 'attachment; filename="video.mp4"');
-// ytdl(URL, {
-//     format: 'mp4'
-//     }).pipe(res);
-// });
