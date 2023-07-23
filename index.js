@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const ytdl = require('ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
 const router = express.Router();
 
 router.get('/', function(req, res) {
@@ -9,10 +10,11 @@ router.get('/', function(req, res) {
     
     ytdl(url, {
         // Request an audio-only format
-        filter: 'audioonly',
-        // The quality option should be highestaudio for the best available audio quality
-        quality: 'highestaudio',
+        filter: format => format.container === 'webm' && format.audioEncoding === 'opus'
     })
+    .pipe(ffmpeg().audioCodec('libmp3lame').format('mp3').on('end', () => {
+        console.log('Finished processing');
+    }))
     .pipe(res);
 });
 
