@@ -6,8 +6,8 @@ var LoremIpsum = require('lorem-ipsum').LoremIpsum;
 
 var lorem = new LoremIpsum({
   sentencesPerParagraph: {
-    max: 8,
-    min: 4
+    max: 1,
+    min: 1
   },
   wordsPerSentence: {
     max: 16,
@@ -15,6 +15,6 @@ var lorem = new LoremIpsum({
   }
 });
 
-app.get('/', (req, res) => res.send(lorem.generateParagraphs(7)))
+// app.get('/', (req, res) => res.send(lorem.generateParagraphs(7)))
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
