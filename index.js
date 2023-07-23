@@ -1,29 +1,12 @@
 const express = require('express');
 const app = express();
 const ytdl = require('ytdl-core');
-const fs = require('fs');
-var router = express.Router();
+const router = express.Router();
 
-router.get('/', async function (req, res, next) {
-    console.log('router called');
+router.get('/', function(req, res) {
     let url = "https://www.youtube.com/watch?v=S9atRW1DgbQ";
-
-    const videoReadableStream = ytdl(url);
-    const videoWritableStream = fs.createWriteStream('video.mp4');
-
-    videoReadableStream.pipe(videoWritableStream);
-    
-    // Wait for the video to finish downloading
-    videoWritableStream.on('finish', () => {
-        console.log("Video downloaded successfully");
-        res.status(200).send("Video downloaded successfully");
-    });
-
-    // Handle any errors that occur during the download process
-    videoWritableStream.on('error', (error) => {
-        console.error("Error downloading the video: ", error);
-        res.status(500).send("Error downloading the video");
-    });
+    res.header('Content-Disposition', 'attachment; filename="video.mp4"');
+    ytdl(url, { format: 'mp4' }).pipe(res);
 });
 
 app.use('/', router);
