@@ -5,7 +5,7 @@ const fs = require('fs')
 var router = express.Router();
 router.get('/', function (req, res, next) {
     console.log('rputer calld')
-    let url = "https://youtu.be/nD_NDngrEl8";
+    let url = "https://www.youtube.com/watch?v=S9atRW1DgbQ";
     ytdl(url).pipe(fs.createWriteStream('video.mp4'));
     res.end();
 })
