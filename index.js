@@ -1,42 +1,15 @@
 const express = require('express');
-const cors = require('cors');
-const fs = require('fs');
-const ffmpeg = require('fluent-ffmpeg');
-const ytdl = require('ytdl-core');
 const app = express();
-app.use(cors());
+const ytdl = require('ytdl-core');
+const fs = require('fs')
+var router = express.Router();
+router.get('/', function (req, res, next) {
+    console.log('rputer calld')
+    let url = "https://youtu.be/nD_NDngrEl8";
+    ytdl(url).pipe(fs.createWriteStream('video.mp4'));
+    res.end();
+})
+app.use(router);
 app.listen(8080, () => {
-    console.log('Server Works !!! At port 8080');
-});
-app.get('/download', (req,res) => {
-var URL = req.query.URL;
-res.header('Content-Disposition', 'attachment; filename="video.mp4"');
-ytdl(URL, {
-    format: 'mp4'
-    }).pipe(res);
-});
-app.get('/downloadmp3', async (req, res, next) => {
-	try {
-		var url = req.query.url;
-		if(!ytdl.validateURL(url)) {
-			return res.sendStatus(400);
-		}
-		let title = 'audio';
-
-		await ytdl.getBasicInfo(url, {
-			format: 'mp4'
-		}, (err, info) => {
-			if (err) throw err;
-			title = info.player_response.videoDetails.title.replace(/[^\x00-\x7F]/g, "");
-		});
-
-		res.header('Content-Disposition', `attachment; filename="${title}.mp3"`);
-		ytdl(url, {
-			format: 'mp3',
-			filter: 'audioonly',
-		}).pipe(res);
-
-	} catch (err) {
-		console.error(err);
-	}
-});
+    console.log('app listingin on 8080')
+})
